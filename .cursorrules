@@ -1,0 +1,235 @@
+# General
+
+- When proposing a change or set of changes, the game should be buildable and runnable with no compilation errors or warnings.
+- When proposing a change or set of changes, describe how to quickly verify that the changes are working as expected.
+
+## Development Methodology
+
+- Adopt an iterative development mentality - code written should focus on the minimum viable functionality required to make forward progress.
+- Adopt a "fail fast" mentality - code written should be written in a way that allows for easy testing and debugging.
+- Code developed should be written in a way that is easy to understand and maintain and simple and quick to understand.
+
+## Custom Commands
+
+When I say "/commit", you will give me the deliminated terminal command that will add files, include a full descriptive commit message, commit and push to git based on the diff of working state. You should assume all files modified and unstaged need to be considered. If I specify specific files, then only attend to those. Within a single commit message, group the bullet points semantically, for e.g., if backend related or frontend related. No need to describe what you are doing.
+
+When I say "/diff", you will summarise the diff of the working state.
+
+When I say "/tutor", you will provide instructions clearly and concisely. You will start with a high level summary of steps to undertake. The steps should all be self contained, such that the code written results in a stable working program that can be run and tested.
+
+When I say "/outline", you will provide a high level outline of the the features that will be implemented in a sequence that will be iteratively built upon.
+When I say, "/next", you will summarise what the next feature to implement will be, based on studying the codebase.
+
+## Coding Style
+
+- Code defensively against linter errors by properly handling potential null cases and adding type assertions where appropriate.
+- Add comments and best practice docstrings to the codebase.
+- Keep things succinct and simple.
+
+# Folder Structure
+
+This is a monorepo that contains a folder for each game.
+The folder called `template` is used as a starting point for each game.
+
+```
+Repository Root
+├── template/            # Frontend game application
+├── game1/               # Game 1 sub-folder
+├── game2/               # Game 2 sub-folder
+...
+```
+
+## Game Folder Structure
+Each game resides in its own sub-folder with the following structure:
+
+```
+Game Sub-Folder
+
+├── public/             # Public assets and entry point
+│ └── index.html        # Main HTML entry point with game container
+├── src/                # Source code directory
+│ ├── scenes/           # Phaser scene components
+│ │ └── MainScene.ts    # Main game scene implementation
+│ ├── services/         # External services integration
+│ │ └── supabase/       # Supabase
+│ │   └── client.ts     # Supabase client integration
+│ └── game.ts           # Game configuration and initialization
+│ └── env.d.ts          # Environment type definitions
+├── sql/                # SQL scripts
+│ ├── init.sql          # Database initialization
+│ ├── reset.sql         # Database reset
+├── assets/             # Game assets
+│ ├── images/           # Static image assets
+│ ├── sprites/          # Sprite sheets and animations
+│ └── audio/            # Sound effects and music
+├── gdd.md              # Game design documentation
+├── .env                # Environment variables (not in git)
+├── .env.example        # Example environment variables
+├── .eslintrc.json      # ESLint configuration
+├── .prettierrc         # Prettier formatting rules
+├── tsconfig.json       # TypeScript configuration
+└── vite.config.ts      # Vite build configuration
+└── README.md           # Project documentation
+```
+
+## Git
+[git.commit]
+
+Commit message pattern: <type>(<scope>): <description>
+
+Example: feat(auth): add OAuth2 authentication
+
+pattern = "^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(?:\\([a-z ]+\\))?: [a-z].\*$"
+
+### Commit types
+
+types = [
+"build", # Changes affecting build system or external dependencies
+"chore", # Regular maintenance tasks
+"ci", # Changes to CI configuration files and scripts
+"docs", # Documentation only changes
+"feat", # New features
+"fix", # Bug fixes
+"perf", # Performance improvements
+"refactor", # Code changes that neither fix bugs nor add features
+"revert", # Revert previous commits
+"style", # Changes that do not affect code meaning (formatting, etc)
+"test" # Adding or modifying tests
+]
+
+# Maximum length for commit message title
+
+title_max_length = 72
+
+# Maximum length for commit message body
+
+body_max_length = 100
+
+# Require scope in commit message
+
+require_scope = false
+
+# Require body in commit message
+
+require_body = false
+
+# Require issue reference in commit message
+
+require_issue = false
+
+# Issue reference pattern (e.g., #123 or PROJECT-123)
+
+issue_pattern = "(#\\d+|[A-Z]+-\\d+)"
+
+## Dependencies
+
+- Make sure to use node packages and dependencies that are compatible with each other
+- Do not use deprecated node packages and/or dependencies
+
+# Phaser
+
+## Phaser Scene Methods
+
+preload()
+
+- Use this.load.image() for static images
+- Use this.load.spritesheet() for animations
+- Use this.load.audio() for sound effects
+- Add loading progress bar
+- Group related assets together
+
+create()
+
+- Initialize game objects and physics
+- Set up input handlers
+- Create initial game state
+- Configure collisions
+- Set up UI elements
+
+update()
+
+- Keep physics calculations separate
+- Use delta time for smooth movement
+- Avoid heavy computations
+- Consider using member variables instead of querying every frame
+- Check for game state changes
+
+## TypeScript Patterns
+
+: any
+
+- Use specific Phaser.Types instead
+- Create custom interfaces for game objects
+- Use type unions for varied inputs
+- Consider type guards for runtime checks
+
+extends Scene
+
+- Implement required lifecycle methods
+- Add type annotations for class properties
+- Consider scene state management
+- Clean up resources in shutdown()
+
+## Asset Loading
+
+this.load.
+
+- Use constant enums for asset keys
+- Implement error handling for failed loads
+- Consider asset preloading strategy
+- Group related assets in a dedicated method
+
+## Physics
+
+physics.add.
+
+- Configure body properties explicitly
+- Set appropriate collision groups
+- Use physics debug in development
+- Consider using physics events
+
+## Input Handling
+
+this.input.
+
+- Use keyboard.addKey() for keyboard input
+- Implement pointer events for touch/click
+- Consider debouncing for performance
+- Clean up input listeners in shutdown()
+
+## General Patterns
+
+new Phaser.Game
+
+- Configure pixel art settings if needed
+- Set appropriate scale mode
+- Enable FPS display in development
+- Consider performance settings
+
+# Supabase
+This allows us to run reset.sql followed by init.sql whenever we need to reset the database.
+
+## Database
+- Each time we update the database, assume we can drop everything and start fresh.
+
+## SQL Editor Queries
+- Make sure to drop any dependencies (like policies) before dropping the tables.
+- Make sure to create tables first before trying to alter or add policies.
+- Make sure foreign key relationships in queries are correct.
+- Do not add views directly to realtime subscriptions in Supabase, as it is not supported.
+- Make sure to grant the necessary permissions for the `anon` and `authenticated` role in Supabase for the tables and views.
+- Make sure  to add a unique index to the materialized view to support concurrent refresh. Let's update the SQL.
+
+## reset.sql
+- This will drop everything, including tables, dependencies, triggers, RLS, views, realtime subscriptions, for a fresh supabase database state.
+- This is unlikely needing to be modified.
+
+## init.sql
+- All creations should be in init.sql, don't forget tables, dependencies, triggers, RLS, views, realtime subscriptions, etc.
+- Add them in the right order.
+- Use the existing headers as a guide, but don't be afraid to add new ones.
+
+## Client Integration
+- Make sure that queries account correctly for foreign key relationships.
+- When handling guest / anonymous users for auth, make use of supabase's signInAnonymously() method. Do not use random password/username combo.
+- For queries, account for edge cases, such as when a user does not yet exist in the database from a fresh account creation.
