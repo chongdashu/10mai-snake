@@ -1,23 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { nanoid } from 'nanoid';
+import { Player, TopScore } from '../../models/game.models';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-export interface Player {
-  id: string;
-  display_name: string;
-  auth_type: 'guest' | 'google';
-  created_at: string;
-  last_seen_at: string;
-}
-
-export interface TopScore {
-  display_name: string;
-  auth_type: 'guest' | 'google';
-  high_score: number;
-  last_achieved_at: string;
-}
 
 export class GameClient {
   private supabase;

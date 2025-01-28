@@ -1,5 +1,6 @@
 import 'phaser';
-import { gameClient, TopScore } from '../services/supabase/client';
+import { gameClient } from '../services/supabase/client';
+import { TopScore } from '../models/game.models';
 
 export class MainMenuScene extends Phaser.Scene {
   private title: Phaser.GameObjects.Text | null = null;

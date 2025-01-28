@@ -1,20 +1,11 @@
 import 'phaser';
 import { gameClient } from '../services/supabase/client';
-
-interface SnakeSegment {
-  body: Phaser.GameObjects.Rectangle;
-  x: number;
-  y: number;
-}
-
-interface Food {
-  body: Phaser.GameObjects.Rectangle;
-  x: number;
-  y: number;
-}
+import { SnakeSprite } from '../sprites/SnakeSprite';
+import { FoodSprite } from '../sprites/FoodSprite';
+import { BorderSprite } from '../sprites/BorderSprite';
 
 export class MainScene extends Phaser.Scene {
-  private snake: SnakeSegment[] = [];
+  private snake: SnakeSprite;
   private gridSize = 20; // Size of each grid cell
   private direction = { x: 1, y: 0 }; // Start moving right
   private moveTimer = 0;
@@ -22,8 +13,8 @@ export class MainScene extends Phaser.Scene {
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private gameWidth = 800; // Default width
   private gameHeight = 600; // Default height
-  private borders: Phaser.GameObjects.Rectangle[] = [];
-  private food: Food | null = null;
+  private borders: BorderSprite;
+  private food: FoodSprite;
   private score = 0;
   private scoreText: Phaser.GameObjects.Text | null = null;
   private borderPadding = 4; // Border thickness
@@ -37,63 +28,22 @@ export class MainScene extends Phaser.Scene {
     super({ key: 'MainScene' });
     // Initialize cursors in constructor to avoid null issues
     this.cursors = {} as Phaser.Types.Input.Keyboard.CursorKeys;
+
+    // Initialize game objects
+    this.snake = new SnakeSprite(this, this.gridSize, this.borderPadding);
+    this.food = new FoodSprite(this, this.gridSize, this.borderPadding);
+    this.borders = new BorderSprite(this, this.borderPadding);
   }
 
   create() {
     // Get game dimensions from camera or use defaults
-    const camera = this.cameras.main;
-    if (camera) {
-      this.gameWidth = camera.width;
-      this.gameHeight = camera.height;
+    if (this.cameras?.main) {
+      this.gameWidth = this.cameras.main.width;
+      this.gameHeight = this.cameras.main.height;
     }
 
     // Create borders
-    const borderThickness = this.borderPadding;
-    const borderColor = 0xff0000;
-
-    // Top border
-    this.borders.push(
-      this.add.rectangle(
-        this.gameWidth / 2,
-        borderThickness / 2,
-        this.gameWidth,
-        borderThickness,
-        borderColor
-      )
-    );
-
-    // Bottom border
-    this.borders.push(
-      this.add.rectangle(
-        this.gameWidth / 2,
-        this.gameHeight - borderThickness / 2,
-        this.gameWidth,
-        borderThickness,
-        borderColor
-      )
-    );
-
-    // Left border
-    this.borders.push(
-      this.add.rectangle(
-        borderThickness / 2,
-        this.gameHeight / 2,
-        borderThickness,
-        this.gameHeight,
-        borderColor
-      )
-    );
-
-    // Right border
-    this.borders.push(
-      this.add.rectangle(
-        this.gameWidth - borderThickness / 2,
-        this.gameHeight / 2,
-        borderThickness,
-        this.gameHeight,
-        borderColor
-      )
-    );
+    this.borders.create(this.gameWidth, this.gameHeight);
 
     // Add score text
     this.scoreText = this.add.text(10, 10, 'Score: 0', {
@@ -164,91 +114,14 @@ export class MainScene extends Phaser.Scene {
     if (this.pauseText) {
       this.pauseText.setVisible(false);
     }
-    this.initializeSnake();
+    this.snake.initialize(this.gameWidth, this.gameHeight);
     this.spawnFood();
   }
 
-  private initializeSnake() {
-    // Clear existing snake segments if any
-    this.snake.forEach(segment => segment.body?.destroy());
-    this.snake = [];
-
-    // Initialize snake at the center
-    const startX =
-      Math.floor(this.gameWidth / (2 * this.gridSize)) * this.gridSize +
-      this.borderPadding;
-    const startY =
-      Math.floor(this.gameHeight / (2 * this.gridSize)) * this.gridSize +
-      this.borderPadding;
-
-    // Create initial snake segments
-    for (let i = 0; i < 3; i++) {
-      const segment = this.add.rectangle(
-        startX - i * this.gridSize + this.gridSize / 2, // Center the rectangle in the grid cell
-        startY + this.gridSize / 2,
-        this.gridSize - 2,
-        this.gridSize - 2,
-        0x00ff00
-      );
-      this.snake.push({
-        body: segment,
-        x: startX - i * this.gridSize,
-        y: startY,
-      });
-    }
-
-    // Reset direction to move right
-    this.direction = { x: 1, y: 0 };
-    this.moveTimer = 0;
-  }
-
   private spawnFood() {
-    // Remove existing food if any
-    if (this.food?.body) {
-      this.food.body.destroy();
-    }
-
-    // Find a position not occupied by the snake
-    let gridX, gridY;
-    do {
-      // Calculate grid positions
-      gridX = Math.floor(
-        Math.random() *
-          ((this.gameWidth - 2 * this.borderPadding) / this.gridSize)
-      );
-      gridY = Math.floor(
-        Math.random() *
-          ((this.gameHeight - 2 * this.borderPadding) / this.gridSize)
-      );
-    } while (
-      this.isPositionOccupied(
-        gridX * this.gridSize + this.borderPadding,
-        gridY * this.gridSize + this.borderPadding
-      )
+    this.food.spawn(this.gameWidth, this.gameHeight, (x, y) =>
+      this.snake.isPositionOccupied(x, y)
     );
-
-    // Convert to world positions
-    const foodX = gridX * this.gridSize + this.borderPadding;
-    const foodY = gridY * this.gridSize + this.borderPadding;
-
-    // Create food - position at top-left like snake segments
-    const foodBody = this.add.rectangle(
-      foodX + this.gridSize / 2, // Center the rectangle in the grid cell
-      foodY + this.gridSize / 2,
-      this.gridSize - 2,
-      this.gridSize - 2,
-      0xff0000
-    );
-
-    this.food = {
-      body: foodBody,
-      x: foodX,
-      y: foodY,
-    };
-  }
-
-  private isPositionOccupied(x: number, y: number): boolean {
-    return this.snake.some(segment => segment.x === x && segment.y === y);
   }
 
   update(time: number, delta: number) {
@@ -292,8 +165,8 @@ export class MainScene extends Phaser.Scene {
   }
 
   private moveSnake() {
-    // Calculate new head position
-    const head = this.snake[0];
+    const segments = this.snake.getSegments();
+    const head = segments[0];
     const newX = head.x + this.direction.x * this.gridSize;
     const newY = head.y + this.direction.y * this.gridSize;
 
@@ -309,50 +182,21 @@ export class MainScene extends Phaser.Scene {
     }
 
     // Check self collision
-    if (this.isPositionOccupied(newX, newY)) {
+    if (this.snake.isPositionOccupied(newX, newY)) {
       this.gameOver();
       return;
     }
 
-    // Check food collision - using grid-based positions
-    const hasEatenFood =
-      this.food && newX === this.food.x && newY === this.food.y;
+    // Check food collision
+    const foodObj = this.food.getFood();
+    const hasEatenFood = foodObj && newX === foodObj.x && newY === foodObj.y;
 
-    // Move body - always move the body first
-    for (let i = this.snake.length - 1; i > 0; i--) {
-      const segment = this.snake[i];
-      const ahead = this.snake[i - 1];
-      segment.x = ahead.x;
-      segment.y = ahead.y;
-      segment.body.setPosition(
-        segment.x + this.gridSize / 2,
-        segment.y + this.gridSize / 2
-      );
-    }
+    // Move snake
+    this.snake.moveSnake(newX, newY);
 
-    // Move head
-    head.x = newX;
-    head.y = newY;
-    head.body.setPosition(
-      head.x + this.gridSize / 2,
-      head.y + this.gridSize / 2
-    );
-
-    // Handle food eating after movement
+    // Handle food eating
     if (hasEatenFood) {
-      const tail = this.snake[this.snake.length - 1];
-      const newSegment = this.add.rectangle(
-        tail.x + this.gridSize / 2,
-        tail.y + this.gridSize / 2,
-        this.gridSize - 2,
-        this.gridSize - 2,
-        0x00ff00
-      );
-      this.snake.push({
-        body: newSegment,
-        x: tail.x,
-        y: tail.y,
-      });
+      this.snake.grow();
 
       // Update score
       this.score += 10;
