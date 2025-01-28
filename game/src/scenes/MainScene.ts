@@ -3,10 +3,11 @@ import { gameClient } from '../services/supabase/client';
 import { SnakeSprite } from '../sprites/SnakeSprite';
 import { FoodSprite } from '../sprites/FoodSprite';
 import { BorderSprite } from '../sprites/BorderSprite';
+import { Food } from '../models/game.models';
 
 export class MainScene extends Phaser.Scene {
   private snake: SnakeSprite;
-  private gridSize = 20; // Size of each grid cell
+  private gridSize = 40; // Size of each grid cell (doubled for higher resolution)
   private direction = { x: 1, y: 0 }; // Start moving right
   private moveTimer = 0;
   private moveInterval = 150; // Move every 150ms
@@ -17,7 +18,7 @@ export class MainScene extends Phaser.Scene {
   private food: FoodSprite;
   private score = 0;
   private scoreText: Phaser.GameObjects.Text | null = null;
-  private borderPadding = 4; // Border thickness
+  private borderPadding = 8; // Border thickness (doubled for higher resolution)
   private isPaused = false;
   private pauseText: Phaser.GameObjects.Text | null = null;
   private escKey: Phaser.Input.Keyboard.Key | null = null;
@@ -73,7 +74,7 @@ export class MainScene extends Phaser.Scene {
       .setVisible(false);
 
     // Setup keyboard controls
-    if (this.input) {
+    if (this.input?.keyboard) {
       this.cursors = this.input.keyboard.createCursorKeys();
       this.escKey = this.input.keyboard.addKey(
         Phaser.Input.Keyboard.KeyCodes.ESC
@@ -119,7 +120,7 @@ export class MainScene extends Phaser.Scene {
   }
 
   private spawnFood() {
-    this.food.spawn(this.gameWidth, this.gameHeight, (x, y) =>
+    this.food.spawn(this.gameWidth, this.gameHeight, (x: number, y: number) =>
       this.snake.isPositionOccupied(x, y)
     );
   }
@@ -127,8 +128,8 @@ export class MainScene extends Phaser.Scene {
   update(time: number, delta: number) {
     // Handle pause toggle
     if (
-      Phaser.Input.Keyboard.JustDown(this.escKey!) ||
-      Phaser.Input.Keyboard.JustDown(this.spaceKey!)
+      (this.escKey && Phaser.Input.Keyboard.JustDown(this.escKey)) ||
+      (this.spaceKey && Phaser.Input.Keyboard.JustDown(this.spaceKey))
     ) {
       this.togglePause();
       return;

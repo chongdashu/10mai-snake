@@ -7,7 +7,7 @@ export class FoodSprite {
   private scene: Scene;
   private borderPadding: number;
 
-  constructor(scene: Scene, gridSize: number = 20, borderPadding: number = 4) {
+  constructor(scene: Scene, gridSize: number = 40, borderPadding: number = 8) {
     this.scene = scene;
     this.gridSize = gridSize;
     this.borderPadding = borderPadding;
@@ -46,29 +46,69 @@ export class FoodSprite {
     const foodX = gridX * this.gridSize + this.borderPadding;
     const foodY = gridY * this.gridSize + this.borderPadding;
 
-    // Create red packet (hongbao)
-    const foodBody = this.scene.add.rectangle(
+    // Create container for food elements
+    const container = this.scene.add.container(
       foodX + this.gridSize / 2,
-      foodY + this.gridSize / 2,
-      this.gridSize - 2,
-      this.gridSize - 2,
+      foodY + this.gridSize / 2
+    );
+
+    // Create red envelope (hongbao) base
+    const foodBody = this.scene.add.rectangle(
+      0,
+      0,
+      this.gridSize - 4,
+      this.gridSize - 4,
       0xff0000 // Bright red for hongbao
     );
 
-    // Add gold detail (simulating traditional Chinese pattern)
-    const goldDetail = this.scene.add.rectangle(
-      foodX + this.gridSize / 2,
-      foodY + this.gridSize / 2,
-      (this.gridSize - 2) * 0.6, // Smaller rectangle for gold detail
-      (this.gridSize - 2) * 0.6,
+    // Add decorative border
+    const border = this.scene.add.rectangle(
+      0,
+      0,
+      this.gridSize - 8,
+      this.gridSize - 8,
       0xffd700 // Gold color
     );
-    goldDetail.setAlpha(0.8);
+    border.setStrokeStyle(2, 0xffd700);
 
-    // Group the elements
-    const container = this.scene.add.container(0, 0, [foodBody, goldDetail]);
+    // Add center pattern (simulating traditional Chinese pattern)
+    const centerSize = this.gridSize * 0.4;
+    const centerPattern = this.scene.add.graphics();
+    centerPattern.lineStyle(2, 0xffd700);
+
+    // Draw stylized "福" (fortune) character using lines
+    centerPattern.moveTo(-centerSize / 3, -centerSize / 3);
+    centerPattern.lineTo(centerSize / 3, -centerSize / 3);
+    centerPattern.lineTo(0, centerSize / 3);
+    centerPattern.moveTo(-centerSize / 3, 0);
+    centerPattern.lineTo(centerSize / 3, 0);
+
+    // Add glow effect
+    const glow = this.scene.add.rectangle(
+      0,
+      0,
+      this.gridSize,
+      this.gridSize,
+      0xffd700
+    );
+    glow.setAlpha(0.2);
+
+    // Add elements to container in order (back to front)
+    container.add([glow, foodBody, border, centerPattern]);
+
+    // Create pulsing animation
+    this.scene.tweens.add({
+      targets: container,
+      scaleX: 1.1,
+      scaleY: 1.1,
+      duration: 1000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    // Store reference to food body and container
     foodBody.setData('container', container);
-
     this.food = {
       body: foodBody,
       x: foodX,

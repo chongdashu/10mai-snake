@@ -1,7 +1,7 @@
 import { GameObjects } from 'phaser';
 
 export interface SnakeSegment {
-  body: GameObjects.Rectangle;
+  body: GameObjects.Container | GameObjects.Rectangle;
   x: number;
   y: number;
 }
