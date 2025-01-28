@@ -3,7 +3,6 @@ import { gameClient } from '../services/supabase/client';
 import { SnakeSprite } from '../sprites/SnakeSprite';
 import { FoodSprite } from '../sprites/FoodSprite';
 import { BorderSprite } from '../sprites/BorderSprite';
-import { Food } from '../models/game.models';
 
 export class MainScene extends Phaser.Scene {
   private particleEmitter!: Phaser.GameObjects.Particles.ParticleEmitter; // Definite assignment assertion
@@ -35,6 +34,15 @@ export class MainScene extends Phaser.Scene {
     this.snake = new SnakeSprite(this, this.gridSize, this.borderPadding);
     this.food = new FoodSprite(this, this.gridSize, this.borderPadding);
     this.borders = new BorderSprite(this, this.borderPadding);
+  }
+
+  preload() {
+    // Create a larger white circle texture for particles
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0xffffff);
+    graphics.fillCircle(8, 8, 8); // Doubled the size
+    graphics.generateTexture('particle', 16, 16); // Doubled the texture size
+    graphics.destroy();
   }
 
   create() {
@@ -92,17 +100,21 @@ export class MainScene extends Phaser.Scene {
       });
     }
 
-    // Create particle emitter
-    this.particleEmitter = this.add.particles(0, 0, 'flares', {
-      frame: 'red',
-      lifespan: 1000,
-      speed: { min: 150, max: 250 },
-      scale: { start: 0.6, end: 0 },
+    // Create particle emitter with the generated texture
+    this.particleEmitter = this.add.particles(0, 0, 'particle', {
+      speed: { min: 100, max: 200 },
+      scale: { start: 0.8, end: 0.2 }, // Increased scale
+      alpha: { start: 0.8, end: 0 }, // Start with some translucency
+      tint: [0xffd700, 0xff3b30], // Mix of gold and red particles
       rotate: { start: 0, end: 360 },
-      gravityY: 400,
-      blendMode: 'ADD',
+      gravityY: 300,
+      quantity: 20, // More particles
+      lifespan: 1000, // Longer lifespan
       emitting: false,
     });
+
+    // Ensure particles render on top of other game objects
+    this.particleEmitter.setDepth(1000);
 
     // Add player name display if available
     const player = gameClient.getCurrentPlayer();
