@@ -6,6 +6,7 @@ import { BorderSprite } from '../sprites/BorderSprite';
 import { Food } from '../models/game.models';
 
 export class MainScene extends Phaser.Scene {
+  private particleEmitter!: Phaser.GameObjects.Particles.ParticleEmitter; // Definite assignment assertion
   private snake: SnakeSprite;
   private gridSize = 40; // Size of each grid cell (doubled for higher resolution)
   private direction = { x: 1, y: 0 }; // Start moving right
@@ -90,6 +91,18 @@ export class MainScene extends Phaser.Scene {
         }
       });
     }
+
+    // Create particle emitter
+    this.particleEmitter = this.add.particles(0, 0, 'flares', {
+      frame: 'red',
+      lifespan: 1000,
+      speed: { min: 150, max: 250 },
+      scale: { start: 0.6, end: 0 },
+      rotate: { start: 0, end: 360 },
+      gravityY: 400,
+      blendMode: 'ADD',
+      emitting: false,
+    });
 
     // Add player name display if available
     const player = gameClient.getCurrentPlayer();
@@ -207,6 +220,11 @@ export class MainScene extends Phaser.Scene {
 
       // Spawn new food
       this.spawnFood();
+
+      // Trigger effects at snake head position
+      const head = this.snake.getSegments()[0];
+      this.particleEmitter.emitParticleAt(head.x, head.y, 8);
+      this.cameras.main.shake(300, 0.02);
     }
   }
 
