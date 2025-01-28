@@ -20,7 +20,10 @@ export class FoodSprite {
   ): void {
     // Remove existing food if any
     if (this.food?.body) {
-      this.food.body.destroy();
+      const container = this.food.body.getData('container');
+      if (container) {
+        container.destroy();
+      }
     }
 
     // Find a position not occupied by the snake
@@ -43,14 +46,28 @@ export class FoodSprite {
     const foodX = gridX * this.gridSize + this.borderPadding;
     const foodY = gridY * this.gridSize + this.borderPadding;
 
-    // Create food
+    // Create red packet (hongbao)
     const foodBody = this.scene.add.rectangle(
       foodX + this.gridSize / 2,
       foodY + this.gridSize / 2,
       this.gridSize - 2,
       this.gridSize - 2,
-      0xff0000
+      0xff0000 // Bright red for hongbao
     );
+
+    // Add gold detail (simulating traditional Chinese pattern)
+    const goldDetail = this.scene.add.rectangle(
+      foodX + this.gridSize / 2,
+      foodY + this.gridSize / 2,
+      (this.gridSize - 2) * 0.6, // Smaller rectangle for gold detail
+      (this.gridSize - 2) * 0.6,
+      0xffd700 // Gold color
+    );
+    goldDetail.setAlpha(0.8);
+
+    // Group the elements
+    const container = this.scene.add.container(0, 0, [foodBody, goldDetail]);
+    foodBody.setData('container', container);
 
     this.food = {
       body: foodBody,
@@ -65,7 +82,10 @@ export class FoodSprite {
 
   destroy(): void {
     if (this.food?.body) {
-      this.food.body.destroy();
+      const container = this.food.body.getData('container');
+      if (container) {
+        container.destroy();
+      }
       this.food = null;
     }
   }

@@ -28,12 +28,9 @@ export class SnakeSprite {
 
     // Create initial snake segments
     for (let i = 0; i < 3; i++) {
-      const segment = this.scene.add.rectangle(
+      const segment = this.createSnakeSegment(
         startX - i * this.gridSize + this.gridSize / 2,
-        startY + this.gridSize / 2,
-        this.gridSize - 2,
-        this.gridSize - 2,
-        0x00ff00
+        startY + this.gridSize / 2
       );
       this.segments.push({
         body: segment,
@@ -72,12 +69,9 @@ export class SnakeSprite {
 
   grow(): void {
     const tail = this.segments[this.segments.length - 1];
-    const newSegment = this.scene.add.rectangle(
+    const newSegment = this.createSnakeSegment(
       tail.x + this.gridSize / 2,
-      tail.y + this.gridSize / 2,
-      this.gridSize - 2,
-      this.gridSize - 2,
-      0x00ff00
+      tail.y + this.gridSize / 2
     );
     this.segments.push({
       body: newSegment,
@@ -88,6 +82,24 @@ export class SnakeSprite {
 
   isPositionOccupied(x: number, y: number): boolean {
     return this.segments.some(segment => segment.x === x && segment.y === y);
+  }
+
+  private createSnakeSegment(x: number, y: number): GameObjects.Rectangle {
+    // Create base rectangle with gold color
+    const segment = this.scene.add.rectangle(
+      x,
+      y,
+      this.gridSize - 2,
+      this.gridSize - 2,
+      0xffd700
+    );
+
+    // Create gold-red effect
+    const isHead = this.segments.length === 0;
+    segment.setFillStyle(isHead ? 0xff0000 : 0xffd700);
+    segment.setAlpha(0.9);
+
+    return segment;
   }
 
   destroy(): void {
